@@ -1,12 +1,12 @@
-module github.com/mlorenzo-stratio/openldap_exporter
+module github.com/majimenez-stratio/openldap_exporter
 
-go 1.18
+go 1.24
 
 require (
 	github.com/go-kit/log v0.2.1
 	github.com/prometheus/client_golang v1.14.0
 	github.com/prometheus/exporter-toolkit v0.8.2
-	github.com/sirupsen/logrus v1.9.0
+	github.com/sirupsen/logrus v1.9.3
 	github.com/urfave/cli/v2 v2.24.4
 	golang.org/x/sync v0.12.0
 	gopkg.in/ldap.v2 v2.5.1

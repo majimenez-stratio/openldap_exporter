@@ -6,7 +6,6 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/url"
 	"os"
 	"regexp"
@@ -289,7 +288,7 @@ func (config *LDAPConfig) LoadCACert(cafile string) error {
 		return errors.New("CA Certificate file does not exists")
 	}
 
-	cert, err := ioutil.ReadFile(cafile)
+	cert, err := os.ReadFile(cafile)
 
 	if err != nil {
 		return errors.New("CA Certificate file is not readable")
@@ -298,7 +297,7 @@ func (config *LDAPConfig) LoadCACert(cafile string) error {
 	config.TLSConfig.RootCAs = x509.NewCertPool()
 
 	if !config.TLSConfig.RootCAs.AppendCertsFromPEM(cert) {
-		return errors.New("Could not parse CA")
+		return errors.New("could not parse CA")
 	}
 
 	return nil
