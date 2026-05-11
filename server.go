@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"time"
 
-	kitlog "github.com/go-kit/log"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/prometheus/exporter-toolkit/web"
 	log "github.com/sirupsen/logrus"
@@ -55,7 +55,7 @@ func (s *Server) Start() error {
 		WebSystemdSocket:   &useSystemdSocket,
 		WebConfigFile:      &s.cfgPath,
 	}
-	err := web.ListenAndServe(s.server, &flags, kitlog.LoggerFunc(s.adaptor))
+	err := web.ListenAndServe(s.server, &flags, slog.New(&logrusHandler{s.logger}))
 	if errors.Is(err, http.ErrServerClosed) {
 		return nil
 	}
@@ -68,38 +68,38 @@ func (s *Server) Stop() {
 	cancel()
 }
 
-func (s *Server) adaptor(kvs ...interface{}) error {
-	if len(kvs) == 0 {
-		return nil
-	}
-	if len(kvs)%2 != 0 {
-		kvs = append(kvs, nil)
-	}
+type logrusHandler struct {
+	logger log.FieldLogger
+}
+
+func (h *logrusHandler) Enabled(_ context.Context, _ slog.Level) bool { return true }
+
+func (h *logrusHandler) Handle(_ context.Context, r slog.Record) error {
 	fields := log.Fields{}
-	for i := 0; i < len(kvs); i += 2 {
-		key := fmt.Sprint(kvs[i])
-		fields[key] = kvs[i+1]
-	}
-	var msg string
-	if val, ok := fields["msg"]; ok {
-		delete(fields, "msg")
-		msg = fmt.Sprint(val)
-	}
-	var level string
-	if val, ok := fields["level"]; ok {
-		delete(fields, "level")
-		level = fmt.Sprint(val)
-	}
-	ll := s.logger.WithFields(fields)
-	switch level {
-	case "error":
-		ll.Error(msg)
-	case "warn":
-		ll.Warn(msg)
-	case "debug":
-		ll.Debug(msg)
+	r.Attrs(func(a slog.Attr) bool {
+		fields[a.Key] = a.Value.Any()
+		return true
+	})
+	ll := h.logger.WithFields(fields)
+	switch r.Level {
+	case slog.LevelError:
+		ll.Error(r.Message)
+	case slog.LevelWarn:
+		ll.Warn(r.Message)
+	case slog.LevelDebug:
+		ll.Debug(r.Message)
 	default:
-		ll.Info(msg)
+		ll.Info(r.Message)
 	}
 	return nil
 }
+
+func (h *logrusHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
+	fields := log.Fields{}
+	for _, a := range attrs {
+		fields[a.Key] = a.Value.Any()
+	}
+	return &logrusHandler{logger: h.logger.WithFields(fields)}
+}
+
+func (h *logrusHandler) WithGroup(_ string) slog.Handler { return h }
