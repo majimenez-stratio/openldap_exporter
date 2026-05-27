@@ -5,8 +5,12 @@ LDFLAGS := -s -w -X github.com/majimenez-stratio/openldap_exporter.commit=${GITC
 LDFLAGS := ${LDFLAGS} -X github.com/majimenez-stratio/openldap_exporter.tag=${GIT_TAG}
 OUTFILE ?= openldap_exporter
 
+.PHONY: test
+test:
+	go test $$(go list ./... | grep -v /vendor/ | grep -v /cmd/) -coverprofile cover.out
+
 .PHONY: precommit
-precommit: clean format lint compile
+precommit: clean format lint test compile
 
 .PHONY: commit
 commit: clean cross-compile

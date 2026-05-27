@@ -15,7 +15,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
-	"gopkg.in/ldap.v2"
+	"github.com/go-ldap/ldap/v3"
 )
 
 const (
@@ -363,10 +363,11 @@ func (s *Scraper) scrape() {
 	var conn *ldap.Conn
 	var err error
 
+	dialURL := s.LDAPConfig.Scheme + "://" + s.LDAPConfig.Addr
 	if s.LDAPConfig.UseTLS {
-		conn, err = ldap.DialTLS(s.LDAPConfig.Protocol, s.LDAPConfig.Addr, &s.LDAPConfig.TLSConfig)
+		conn, err = ldap.DialURL(dialURL, ldap.DialWithTLSConfig(&s.LDAPConfig.TLSConfig))
 	} else {
-		conn, err = ldap.Dial(s.LDAPConfig.Protocol, s.LDAPConfig.Addr)
+		conn, err = ldap.DialURL(dialURL)
 		if err != nil {
 			s.log.WithError(err).Error("dial failed")
 			dialCounter.WithLabelValues("fail").Inc()
