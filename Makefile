@@ -39,6 +39,14 @@ endif
 	@echo "Running staticcheck ..."
 	@staticcheck $(shell go list ./... | grep -v /vendor/)
 
+.PHONY: vulncheck
+vulncheck:
+ifeq (, $(shell which govulncheck))
+	go install golang.org/x/vuln/cmd/govulncheck@latest
+endif
+	@echo "Running govulncheck ..."
+	@govulncheck ./...
+
 .PHONY: compile
 compile: target
 	go build -ldflags "${LDFLAGS}" -o target/${OUTFILE} ./cmd/openldap_exporter/...

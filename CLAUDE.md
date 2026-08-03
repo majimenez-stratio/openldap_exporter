@@ -17,6 +17,9 @@ make format
 # Lint (installs staticcheck if missing)
 make lint
 
+# Scan for known vulnerabilities (installs govulncheck if missing)
+make vulncheck
+
 # Run tests with coverage report
 make test
 
@@ -26,8 +29,8 @@ go test -run TestName ./...
 # Format + lint + test + compile in one shot
 make precommit
 
-# Update dependencies
-go mod tidy
+# Update all dependencies to their latest versions
+go get -t -u ./... && go mod tidy
 ```
 
 ## Architecture
